@@ -6,7 +6,7 @@ public class Program{
     private final List<Instructions> instructions;
     private final Map<String, Integer> labels;
 
-    public program(List<Instructions> instructions, Map<String, Integer> labels) {
+    public Program(List<Instructions> instructions, Map<String, Integer> labels) {
         this.instructions = Collections.unmodifiableList(instructions);
         this.labels = Collections.unmodifiableMap(labels);
     }

@@ -8,16 +8,22 @@ public class Machine {
     private int pc;
     private int steps;
     private Status status;
+    private String errorMessage;
 
     public Machine(Program program, String originalInput, int stepLimit){
         if (program == null){
-            throw new IllegalArgumentException("Program cannot be null");
+            throw new IllegalArgumentException("Program cannot be null.");
         }
         if (originalInput == null){
-            throw new IllegalArgumentException("Input cannot be null");
+            throw new IllegalArgumentException("Input cannot be null.");
         }
         if (stepLimit <= 0){
-            throw new IllegalArgumentException("Step limit must be positive");
+            throw new IllegalArgumentException("Step limit must be positive.");
+        }
+        for (int i = 0; i < originalInput.length(); i++){
+            if (Character.isWhitespace(originalInput.charAt(i))){
+                throw new IllegalArgumentException("Input tape contains whitespace.");
+            }
         }
         this.program = program;
         this.originalInput = originalInput;
@@ -34,6 +40,7 @@ public class Machine {
         this.pc = 0;
         this.steps = 0;
         this.status = Status.READY;
+        this.errorMessage = "";
     }
 
     public boolean step(){
@@ -43,6 +50,7 @@ public class Machine {
 
         if (pc < 0 || pc >= program.getInstructions().size()){
             status = Status.ERROR;
+            errorMessage = "Program counter out of bounds before execution: pc = " + pc;
             return false;   
         }
 
@@ -51,7 +59,9 @@ public class Machine {
 
         switch (instruction.getOperation()){
             case LEFT -> {
-                head--;
+                if (head > 0){
+                    head--;
+                }
                 pc++;
             }
             case RIGHT -> {
@@ -67,6 +77,7 @@ public class Machine {
                     Integer targetPc = program.getLabels().get(instruction.getTarget());
                     if (targetPc == null){
                         status = Status.ERROR;
+                        errorMessage = "Undefined jump target " + instruction.getTarget() + " at line " + instruction.getSourceLine() + ".";
                     } else {
                         pc = targetPc;
                     }
@@ -78,15 +89,24 @@ public class Machine {
                 Integer targetPc = program.getLabels().get(instruction.getTarget());
                 if (targetPc == null){
                     status = Status.ERROR;
+                    errorMessage = "Undefined jump target " + instruction.getTarget() + " at line " + instruction.getSourceLine() + ".";
                 } else {
                     pc = targetPc;
                 }
             }
             case HALT -> status = Status.HALTED;
         }
+
+        if (status == Status.READY && pc >= program.getInstructions().size()){
+            status = Status.ERROR;
+            errorMessage = "Fell past the final instruction without HALT.";
+        }
+
         if (status == Status.READY && steps >= stepLimit){
             status = Status.LIMIT_REACHED;
+            errorMessage = "Step limit reached.";
         }
+
         return status == Status.READY;
     }
 
@@ -126,5 +146,9 @@ public class Machine {
 
     public Status getStatus() {
         return status;
+    }
+
+    public String getErrorMessage() {
+        return errorMessage;
     }
 }

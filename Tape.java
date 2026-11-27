@@ -26,4 +26,8 @@ public class Tape{
         }
         return max;
     }
+
+    public int displayEndIndex(int head){
+        return Math.max(highestNonBlank(), head);
+    }
 }
