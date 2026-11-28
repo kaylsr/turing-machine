@@ -108,7 +108,7 @@ public class Main {
                 }
 
                 case "quit" -> {
-                    System.out.println("Huzzah End.");
+                    System.out.println("\nHuzzah End.");
                     return;
                 }
 
@@ -163,7 +163,7 @@ public class Main {
         System.out.println();
 
         System.out.println("Head Index: " + head);
-        System.out.println("Instruction: " + formatNextInstruction(machine));
+        System.out.println("Next Instruction: " + formatNextInstruction(machine));
         System.out.println("Steps: " + machine.getSteps());
         System.out.println("Status: " + formatStatus(machine.getStatus()));
 
