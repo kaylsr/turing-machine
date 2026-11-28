@@ -8,7 +8,7 @@ public class Machine {
     private int pc;
     private int steps;
     private Status status;
-    private String errorMessage;
+    private String statusMessage;
 
     public Machine(Program program, String originalInput, int stepLimit){
         if (program == null){
@@ -40,7 +40,7 @@ public class Machine {
         this.pc = 0;
         this.steps = 0;
         this.status = Status.READY;
-        this.errorMessage = "";
+        this.statusMessage = "";
     }
 
     public boolean step(){
@@ -50,7 +50,7 @@ public class Machine {
 
         if (pc < 0 || pc >= program.getInstructions().size()){
             status = Status.ERROR;
-            errorMessage = "Program counter out of bounds before execution: pc = " + pc;
+            statusMessage = "Program counter out of bounds before execution: pc = " + pc;
             return false;   
         }
 
@@ -77,7 +77,7 @@ public class Machine {
                     Integer targetPc = program.getLabels().get(instruction.getTarget());
                     if (targetPc == null){
                         status = Status.ERROR;
-                        errorMessage = "Undefined jump target " + instruction.getTarget() + " at line " + instruction.getSourceLine() + ".";
+                        statusMessage = "Undefined jump target " + instruction.getTarget() + " at line " + instruction.getSourceLine() + ".";
                     } else {
                         pc = targetPc;
                     }
@@ -89,7 +89,7 @@ public class Machine {
                 Integer targetPc = program.getLabels().get(instruction.getTarget());
                 if (targetPc == null){
                     status = Status.ERROR;
-                    errorMessage = "Undefined jump target " + instruction.getTarget() + " at line " + instruction.getSourceLine() + ".";
+                    statusMessage = "Undefined jump target " + instruction.getTarget() + " at line " + instruction.getSourceLine() + ".";
                 } else {
                     pc = targetPc;
                 }
@@ -99,12 +99,12 @@ public class Machine {
 
         if (status == Status.READY && pc >= program.getInstructions().size()){
             status = Status.ERROR;
-            errorMessage = "Fell past the final instruction without HALT.";
+            statusMessage = "Fell past the final instruction without HALT.";
         }
 
         if (status == Status.READY && steps >= stepLimit){
             status = Status.LIMIT_REACHED;
-            errorMessage = "Step limit reached.";
+            statusMessage = "Step limit reached.";
         }
 
         return status == Status.READY;
@@ -148,7 +148,7 @@ public class Machine {
         return status;
     }
 
-    public String getErrorMessage() {
-        return errorMessage;
+    public String getStatusMessage() {
+        return statusMessage;
     }
 }
