@@ -91,7 +91,7 @@ public class Parser{
                     }
                 }
             }
-            instructions.add(new Instructions(operation, symbol, target, lineNumber));
+            instructions.add(new Instructions(operations, symbol, target, lineNumber));
         }
         if(instructions.isEmpty()){
             throw new ProgramException(1, "Program is empty.");

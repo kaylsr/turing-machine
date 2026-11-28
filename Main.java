@@ -7,16 +7,13 @@ import java.util.Scanner;
 
 public class Main {
     private static final int DEFAULT_STEP_LIMIT = 10_000;
-    private static final int WINDOW_SIZE = 11;
-
-    private static int windowStart = 0;
 
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
 
         String filePath;
         String inputTape;
-        int stepLIMIT = DEFAULT_STEP_LIMIT;
+        int stepLimit = DEFAULT_STEP_LIMIT;
 
         if (args.length == 0) {
             System.out.print("Program File: ");
@@ -29,20 +26,20 @@ public class Main {
             String limitInput = scanner.nextLine().trim();
             if (!limitInput.isEmpty()) {
                 try {
-                    stepLimit = Integer.parseInt(LimitInput);
+                    stepLimit = Integer.parseInt(limitInput);
                 } catch (NumberFormatException e) {
-                    System.err.println("Invalid step limit '" + limitInput + "': must be a valid integer.");
+                    System.err.println("Invalid step limit '" + limitInput + "': must be a positive integer.");
                     return;
                 }
             }
         } else if (args.length == 2 || args.length == 3) {
             filePath = args[0];
-            inputTape = args [1];
+            inputTape = args[1];
             if (args.length == 3) {
                 try {
-                    stepLimit = Integer.parstInt(args[2]);
+                    stepLimit = Integer.parseInt(args[2]);
                 } catch (NumberFormatException e) {
-                    System.err.println("Invalid step limit '" + args[2] + "': must be a valid integer.");
+                    System.err.println("Invalid step limit '" + args[2] + "': must be a positive integer.");
                     return;
                 }
             }
@@ -75,70 +72,65 @@ public class Main {
             return;
         }
 
-        windowStart = 0;
         printConfiguration(machine);
 
         while (true) {
             System.out.print("\nCommand (step, run, reset, quit): ");
-            if (scanner.hasNextLine()) {
+            if (!scanner.hasNextLine()) {
                 break;
             }
-        }
 
-        String command = scanner.nextLine().trim().toLowerCase();
-        switch (command) {
-            case "step" -> {
-                if (machine.getStatus() != Status.READY) {
-                    System.out.println("Status is " + formatStatus(machine.getStatus() + ". Use 'reset' before stepping again."));
-                } else {
-                    machine.step();
+            String command = scanner.nextLine().trim().toLowerCase();
+            switch (command) {
+                case "step" -> {
+                    if (machine.getStatus() != Status.READY) {
+                        System.out.println("Status is " + formatStatus(machine.getStatus())
+                                + ". Use 'reset' before stepping again.");
+                    } else {
+                        machine.step();
+                        printConfiguration(machine);
+                    }
+                }
+
+                case "run" -> {
+                    if (machine.getStatus() != Status.READY) {
+                        System.out.println("Status is " + formatStatus(machine.getStatus())
+                                + ". Use 'reset' before running again.");
+                    } else {
+                        machine.run();
+                        printConfiguration(machine);
+                    }
+                }
+
+                case "reset" -> {
+                    machine.reset();
                     printConfiguration(machine);
                 }
-            }
 
-            case "run" -> {
-                if (machine.getStatus() != Status.READY) {
-                    System.out.println("Status is " + formatStatus(machine.getStatus() + ". Use 'reset' before running again."));
-                } else {
-                    machine.run();
-                    printConfiguration(machine);
+                case "quit" -> {
+                    System.out.println("Huzzah End.");
+                    return;
                 }
-            }
 
-            case "reset" -> {
-                machine.reset();
-                windowStart = 0;
-                printConfiguration(machine);
-            }
+                case "" -> {
+                    // Do nothing if the user just presses Enter.
+                }
 
-            case "quit" -> {
-                System.out.println("Huzzah End.");
-                return;
+                default -> System.out.println("Unknown command '" + command
+                        + "'. Valid Commands: step, run, reset, quit.");
             }
-
-            case "" -> {
-                //In case hitting Enter w no input
-            }
-
-            default -> System.out.println("Unknown command '" + command + "'. Valid Commands: step, run, reset, quit.");
         }
     }
 
     public static void printConfiguration(Machine machine) {
         int head = machine.getHead();
+        int cellCount = Math.max(11, machine.getTape().displayEndIndex(head) + 1);
 
-        if (head >= windowStart + WINDOW_SIZE) {
-            windowStart = head - WINDOW_SIZE + 1;
-        } else if (head < windowStart) {
-            windowStart = head;
-        }
-
-        int[] widths = new int[WINDOW_SIZE];
+        int[] widths = new int[cellCount];
         int innerWidth = 0;
-        for (int i = 0; i < WINDOW_SIZE; i++) {
-            int idx = windowStart + i;
-            widths[i] = String.valueOf(idx).length();
-            innerWidth += widths[i] + (i < WINDOW_SIZE - 1 ? 1 : 0);
+        for (int i = 0; i < cellCount; i++) {
+            widths[i] = String.valueOf(i).length();
+            innerWidth += widths[i] + (i < cellCount - 1 ? 1 : 0);
         }
 
         String divider = "        " + "=".repeat(Math.max(innerWidth, 24));
@@ -146,16 +138,15 @@ public class Main {
         StringBuilder tapeRow = new StringBuilder("Tape    ");
         StringBuilder headRow = new StringBuilder("        ");
 
-        for (int i = 0; i < WINDOW_SIZE; i++) {
-            int idx = windowStart + i;
+        for (int i = 0; i < cellCount; i++) {
             int w = widths[i];
-            char val = machine.getTape().read(idx);
+            char val = machine.getTape().read(i);
 
-            indexRow.append(idx);
+            indexRow.append(i);
             tapeRow.append(val).append(" ".repeat(w - 1));
-            headRow.append(idx == head ? "^" : " ").append(" ".repeat(w - 1));
+            headRow.append(i == head ? "^" : " ").append(" ".repeat(w - 1));
 
-            if (i < WINDOW_SIZE - 1) {
+            if (i < cellCount - 1) {
                 indexRow.append(" ");
                 tapeRow.append(" ");
                 headRow.append(" ");
@@ -176,8 +167,8 @@ public class Main {
         System.out.println("Steps: " + machine.getSteps());
         System.out.println("Status: " + formatStatus(machine.getStatus()));
 
-        if (machine.getStatus() == Status.ERROR && !machine.getErrorMessage().isEmpty()) {
-            System.out.println("Reason: " + machine.getErrorMessage());
+        if (machine.getStatus() == Status.ERROR && !machine.getStatusMessage().isEmpty()) {
+            System.out.println("Reason: " + machine.getStatusMessage());
         }
     }
 
